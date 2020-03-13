@@ -145,10 +145,12 @@
 
                 naver.maps.Event.addListener(map, 'dragend', function () {
                     usermarker.setPosition(map.getCenter());
+                    circle.setCenter(map.getCenter());
                     recieveMaskSeller(map.getCenter()._lat, map.getCenter()._lng)
                 });
                 naver.maps.Event.addListener(map, 'zoom_changed', function () {
                     usermarker.setPosition(map.getCenter());
+                    circle.setCenter(map.getCenter());
                     recieveMaskSeller(map.getCenter()._lat, map.getCenter()._lng)
                 });
 
