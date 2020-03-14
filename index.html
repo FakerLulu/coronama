@@ -255,6 +255,7 @@ opacity : 0.5
                     '   <h3>' + stores[i].name + '</h3>',
                     '   <p>' + stores[i].addr + '<br />',
                     '재고 : ' + status + '<br />',
+                    '입고 예상 시간 : ' + (stores[i].stock_at==null?'정보없음':stores[i].stock_at) + '<br />',
                     '   </p>',
                     '</div>'
                 ].join('');
