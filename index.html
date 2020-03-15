@@ -51,16 +51,15 @@
 
         .search #address {
             width: 100%;
-            height: 20px;
-            line-height: 20px;
+            line-height: 30px;
             border: solid 1px #555;
-            padding: 5px;
+            padding: 0 10px;
             font-size: 12px;
             box-sizing: content-box;
         }
 
         .search #submit {
-			width: 20%;
+            width: 100%;
             line-height: 30px;
             padding: 0 10px;
             font-size: 12px;
@@ -72,7 +71,7 @@
         .search #result {
             margin-top: 10px;
             width: 100%;
-            height: 50vh;
+            max-height: 40vh;
             line-height: 30px;
             padding: 0 10px;
             font-size: 12px;
@@ -81,8 +80,69 @@
             box-sizing: content-box;
             background-color: white;
             overflow: scroll;
-opacity : 0.5
+
         }
+        .iw_inner{
+            width: 20vw;
+            height: 7wh;
+            overflow: hidden;
+        }
+        #result .resultstore:nth-child(n+2){
+            border-top: 1px solid grey;
+        }
+
+        @media (max-width : 400px){
+            .iw_inner{
+                font-size: 3vmin;
+                width: 20vw;
+                height: 25vh;
+                overflow: hidden;
+            }
+            .iw_inner:hover{
+                height: 30vh;
+                padding-top: 5vh;
+            }
+            .search {
+                position: absolute;
+                width: 18vw;
+                z-index: 1000;
+                top: 20px;
+                left: 20px;
+            }
+            .search #address {
+                font-size: 3vmin;
+                height: 20px;
+                line-height: 20px;
+                border: solid 1px #555;
+                padding: 2px;
+                box-sizing: content-box;
+            }
+
+            .search #submit {
+                padding: 2px;
+                font-size: 3vmin;
+                line-height: 15px;
+                border: solid 1px #555;
+                border-radius: 3px;
+                cursor: pointer;
+                box-sizing: content-box;
+            }
+            .search #result {
+                margin-top: 10px;
+                width: 100%;
+                height: 50vh;
+                line-height: 30px;
+                padding: 2px;
+                font-size: 12px;
+                border: solid 1px #555;
+                border-radius: 3px;
+                box-sizing: content-box;
+                background-color: white;
+                overflow: scroll;
+                opacity : 0.5
+            }
+        }
+       
     </style>
 </head>
 
@@ -109,27 +169,45 @@ opacity : 0.5
         var stores = [];
         var circle
 
-
+//37.5298911,126.9642278
 
         navigator.geolocation.getCurrentPosition((pos) => {
+            makemap(pos);
+        },
+        ()=>{
+            // 위치 허용하기 싫으면 용산역
+            let pos = {
+                coords : {
+                    latitude : 37.5298911,
+                    longitude : 126.9642278
+                }
+            }
+            makemap(pos);
+        });
+
+        
+
+
+        function makemap(pos) {
             var mapOptions = {
                 center: new naver.maps.LatLng(pos.coords.latitude, pos.coords.longitude),
                 useStyleMap: true,
 
                 zoom: 15,
                 minZoom: 10, //지도의 최소 줌 레벨
-                zoomControl: true, //줌 컨트롤의 표시 여부
-                zoomControlOptions: { //줌 컨트롤의 옵션
-                    position: naver.maps.Position.TOP_RIGHT,
+                // zoomControl: true, //줌 컨트롤의 표시 여부
+                // zoomControlOptions: { //줌 컨트롤의 옵션
+                //     position: naver.maps.Position.TOP_RIGHT,
 
-                },
+                // },
                 mapTypeControl: true,
                 mapTypeControlOptions: {
                     style: naver.maps.MapTypeControlStyle.BUTTON,
-                    position: naver.maps.Position.TOP_RIGHT
+                    position: naver.maps.Position.RIGHT
                 }
 
             };
+            searchCoordinateToAddress(mapOptions.center);
 
             map = new naver.maps.Map('map', mapOptions);
             naver.maps.Event.once(map, 'init_stylemap', function () {
@@ -138,11 +216,12 @@ opacity : 0.5
                 });
 
                 customControl.setMap(map);
-
+                
                 var domEventListener = naver.maps.Event.addDOMListener(customControl.getElement(), 'click', function () {
-                    map.setCenter(new naver.maps.LatLng(pos.coords.latitude, pos.coords.longitude));
+                    map.setCenter(mapOptions.center);
                     usermarker.setPosition(map.getCenter());
                     circle.setCenter(map.getCenter());
+                    searchCoordinateToAddress(map.getCenter());
                     recieveMaskSeller(map.getCenter()._lat, map.getCenter()._lng)
                 });
 
@@ -150,29 +229,32 @@ opacity : 0.5
                 naver.maps.Event.addListener(map, 'dragend', function () {
                     usermarker.setPosition(map.getCenter());
                     circle.setCenter(map.getCenter());
+                    searchCoordinateToAddress(map.getCenter());
                     recieveMaskSeller(map.getCenter()._lat, map.getCenter()._lng)
                 });
                 naver.maps.Event.addListener(map, 'zoom_changed', function () {
                     usermarker.setPosition(map.getCenter());
                     circle.setCenter(map.getCenter());
+                    searchCoordinateToAddress(map.getCenter());
                     recieveMaskSeller(map.getCenter()._lat, map.getCenter()._lng)
                 });
 
                 recieveMaskSeller(pos.coords.latitude, pos.coords.longitude)
+                    circle = new naver.maps.Circle({
+                    map: map,
+                    center: mapOptions.center,
+                    radius: 500,
+                    fillColor: 'yellowgreen',
+                    fillOpacity: 0.3
+                });
+
+                usermarker = new naver.maps.Marker({
+                    position: mapOptions.center,
+                    map: map
+                });
             });
 
-            circle = new naver.maps.Circle({
-                map: map,
-                center: new naver.maps.LatLng(pos.coords.latitude, pos.coords.longitude),
-                radius: 500,
-                fillColor: 'yellowgreen',
-                fillOpacity: 0.3
-            });
-
-            usermarker = new naver.maps.Marker({
-                position: new naver.maps.LatLng(pos.coords.latitude, pos.coords.longitude),
-                map: map
-            });
+           
 
 
             $('#address').on('keydown', function (e) {
@@ -188,8 +270,7 @@ opacity : 0.5
 
                 searchAddressToCoordinate($('#address').val());
             });
-        });
-
+        }
 
         function recieveMaskSeller(lat, lng) {
             $.ajax({
@@ -210,31 +291,43 @@ opacity : 0.5
                 sellerWindowList[i].setMap(null);
             }
 
-            stores = data.stores
+            stores = data.stores.sort((a,b)=>{return a.name<b.name?-1:a.name==b.name?0:1})// sort by store name
+            let plentylist = [];
+            let somelist = [];
+            let fewlist = [];
 
+            $('#result').html('');
             for (let i = 0; i < stores.length; i++) {
                 let remainStatus = stores[i].remain_stat;
-                let status = '정보없음';
+                let status = '<strong style="color:grey">정보없음</strong>';
                 let markerimg = './marker (5).png';
+                let storeexam = '<div class="resultstore"><strong>' + stores[i].name + '</strong><br>'
+                + stores[i].addr +'<br> 재고 : status </div>';
+
                 switch (remainStatus) {
                     case 'plenty':
-                        status = '100개 이상'
+                        status = '<strong style="color:blue">100개 이상</strong>'
                         markerimg = './marker (1).png';
+                        plentylist.push(storeexam.replace('status',status))
                         break;
                     case 'some':
-                        status = '30~99개'
+                        status = '<strong style="color:green">30~99개</strong>'
                         markerimg = './marker (2).png';
+                        somelist.push(storeexam.replace('status',status))
+
                         break;
                     case 'few':
-                        status = '1~29개'
+                        status = '<strong style="color:orange">1~29개</strong>'
                         markerimg = './marker (3).png';
+                        fewlist.push(storeexam.replace('status',status))
+
                         break;
                     case 'empty':
-                        status = '매진'
+                        status = '<strong style="color:red">매진</strong>'
                         markerimg = './marker (4).png';
                         break;
                     case 'break':
-                        status = '판매중지'
+                        status = '<strong style="color:darkgrey">판매중지</strong>'
                         break;
                 }
 
@@ -250,15 +343,26 @@ opacity : 0.5
                     }
                 });
                 sellerMarkerList.push(marker)
+
+                let stocktime;
+                if (stores[i].stock_at == null) {
+                    stocktime = '정보없음'
+                }
+                else { 
+                    stocktime = stores[i].stock_at.split(' ')[1].split(':')
+                    stocktime = stocktime[0]+'시 '+stocktime[1]+'분'
+                }
+
                 let contentString = [
                     '<div class="iw_inner">',
                     '   <h3>' + stores[i].name + '</h3>',
-                    '   <p>' + stores[i].addr + '<br />',
-                    '재고 : ' + status + '<br />',
-                    '입고 예상 시간 : ' + (stores[i].stock_at==null?'정보없음':stores[i].stock_at) + '<br />',
-                    '   </p>',
+                    '   <p class="store_addr">' + stores[i].addr + '</p>',
+                    '<p>재고 : ' + status + '</p>',
+                    '<p>입고 예상 시간 : ' + stocktime+'</p>',
                     '</div>'
                 ].join('');
+
+
                 let infowindow = new naver.maps.InfoWindow({
                     content: contentString
                 });
@@ -284,8 +388,19 @@ opacity : 0.5
                 });
             }
 
-
-
+            if(plentylist.length==0 && somelist.length ==0 && fewlist.length ==0){
+                $('#result').append('구입 가능한 약국 없음');
+            }else{
+                while(plentylist.length>0){
+                    $('#result').append(plentylist.pop());
+                }
+                while(somelist.length>0){
+                    $('#result').append(somelist.pop());
+                }
+                while(fewlist.length>0){
+                    $('#result').append(fewlist.pop());
+                }
+            }
         }
 
         function searchAddressToCoordinate(address) {
@@ -326,6 +441,41 @@ opacity : 0.5
 
             });
         }
+
+        function searchCoordinateToAddress(latlng) {
+                naver.maps.Service.reverseGeocode({
+                    coords: latlng,
+                    orders: [
+                        naver.maps.Service.OrderType.ADDR,
+                        naver.maps.Service.OrderType.ROAD_ADDR
+                    ].join(',')
+                }, function (status, response) {
+                    if (status === naver.maps.Service.Status.ERROR) {
+                        if (!latlng) {
+                            return alert('ReverseGeocode Error, Please check latlng');
+                        }
+                        if (latlng.toString) {
+                            return alert('ReverseGeocode Error, latlng:' + latlng.toString());
+                        }
+                        if (latlng.x && latlng.y) {
+                            return alert('ReverseGeocode Error, x:' + latlng.x + ', y:' + latlng.y);
+                        }
+                        return alert('ReverseGeocode Error, Please check latlng');
+                    }
+
+                    var items = response.v2.results,
+                        address = '',
+                        htmlAddresses = [];
+
+                    for (var i = 0, ii = items.length, item, addrType; i < ii; i++) {
+                        item = items[i];
+                        address = item.region.area1.name+' '+item.region.area2.name+' '+item.region.area3.name || '';
+                        $('.search #address').val(address)
+                        break;
+                    }
+
+                });
+            }
     </script>
 </body>
 
