@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import './App.css';
 import Map from './Map'
 import Search from './Search';
-import { render } from '@testing-library/react';
 
 class App extends Component  {
 
@@ -16,21 +15,23 @@ class App extends Component  {
         }
       }
     };
+
   }
 
-
-
   render(){
-    navigator.geolocation.getCurrentPosition((position) => {
-      this.setState({
-        pos : position
-      });
-    });
 
     return (
       <div className ='App'>
         <Search></Search>
-        <Map position = {this.state.pos}></Map>
+        <Map position = {this.state.pos}
+        getPos={
+          function(position){
+            this.setState({
+              pos : position
+            })
+          }.bind(this)
+        }
+        ></Map>
       </div>
     );
   }

@@ -1,10 +1,10 @@
 import React, { Component } from 'react'
 import './Map.css'
-import './marker (1).png'
-import './marker (2).png'
-import './marker (3).png'
-import './marker (4).png'
-import './marker (5).png'
+import m1 from './marker (1).png'
+import m2 from  './marker (2).png'
+import m3 from  './marker (3).png'
+import m4 from  './marker (4).png'
+import m5 from  './marker (5).png'
 
 import $ from 'jquery';
 
@@ -15,8 +15,8 @@ class Map extends Component {
         var map;
         var usermarker;
         var locationBtnHtml = '<a href="#" class="btn_mylct"><span class="spr_trff spr_ico_mylct">내위치</span></a>';
-        var sellerMarkerList = new Array;
-        var sellerWindowList = new Array;
+        var sellerMarkerList = [];
+        var sellerWindowList = [];
         var stores = [];
         var circle;
 
@@ -49,7 +49,7 @@ class Map extends Component {
         
                         customControl.setMap(map);
         
-                        var domEventListener = naver.maps.Event.addDOMListener(customControl.getElement(), 'click', function () {
+                        naver.maps.Event.addDOMListener(customControl.getElement(), 'click', function () {
                             map.setCenter(mapOptions.center);
                             usermarker.setPosition(map.getCenter());
                             circle.setCenter(map.getCenter());
@@ -123,7 +123,7 @@ class Map extends Component {
                         sellerWindowList[i].setMap(null);
                     }
         
-                    stores = data.stores.sort((a, b) => { return a.name < b.name ? -1 : a.name == b.name ? 0 : 1 })// sort by store name
+                    stores = data.stores.sort((a, b) => { return a.name < b.name ? -1 : a.name === b.name ? 0 : 1 })// sort by store name
                     let plentylist = [];
                     let somelist = [];
                     let fewlist = [];
@@ -132,34 +132,36 @@ class Map extends Component {
                     for (let i = 0; i < stores.length; i++) {
                         let remainStatus = stores[i].remain_stat;
                         let status = '<strong style="color:grey">정보없음</strong>';
-                        let markerimg = './marker (5).png';
+                        let markerimg = m5;
                         let storeexam = '<div class="resultstore"><strong>' + stores[i].name + '</strong><br>'
                             + stores[i].addr + '<br> 재고 : status </div>';
         
                         switch (remainStatus) {
                             case 'plenty':
                                 status = '<strong style="color:blue">100개 이상</strong>'
-                                markerimg = './marker (1).png';
+                                markerimg = m1;
                                 plentylist.push(storeexam.replace('status', status))
                                 break;
                             case 'some':
                                 status = '<strong style="color:green">30~99개</strong>'
-                                markerimg = './marker (2).png';
+                                markerimg = m2;
                                 somelist.push(storeexam.replace('status', status))
         
                                 break;
                             case 'few':
                                 status = '<strong style="color:orange">1~29개</strong>'
-                                markerimg = './marker (3).png';
+                                markerimg = m3;
                                 fewlist.push(storeexam.replace('status', status))
         
                                 break;
                             case 'empty':
                                 status = '<strong style="color:red">매진</strong>'
-                                markerimg = './marker (4).png';
+                                markerimg = m4;
                                 break;
                             case 'break':
                                 status = '<strong style="color:darkgrey">판매중지</strong>'
+                                break;
+                                default:
                                 break;
                         }
         
@@ -182,7 +184,7 @@ class Map extends Component {
                         }
                         else {
                             stocktime = stores[i].stock_at.split(' ')[1].split(':')
-                            stocktime = stocktime[0] + '시 ' + stocktime[1] + '분'
+                            stocktime = stores[i].stock_at.split(' ')[0]+" "+stocktime[0] + '시 ' + stocktime[1] + '분'
                         }
         
                         let contentString = [
@@ -190,7 +192,7 @@ class Map extends Component {
                             '   <h3>' + stores[i].name + '</h3>',
                             '   <p class="store_addr">' + stores[i].addr + '</p>',
                             '<p>재고 : ' + status + '</p>',
-                            '<p>입고 예상 시간 : ' + stocktime + '</p>',
+                            '<p>입고 시간 : ' + stocktime + '</p>',
                             '</div>'
                         ].join('');
         
@@ -220,7 +222,7 @@ class Map extends Component {
                         });
                     }
         
-                    if (plentylist.length == 0 && somelist.length == 0 && fewlist.length == 0) {
+                    if (plentylist.length === 0 && somelist.length === 0 && fewlist.length === 0) {
                         $('#result').append('구입 가능한 약국 없음');
                     } else {
                         while (plentylist.length > 0) {
@@ -296,10 +298,9 @@ class Map extends Component {
                         }
         
                         var items = response.v2.results,
-                            address = '',
-                            htmlAddresses = [];
+                            address = '';
         
-                        for (var i = 0, ii = items.length, item, addrType; i < ii; i++) {
+                        for (var i = 0, ii = items.length, item; i < ii; i++) {
                             item = items[i];
                             address = item.region.area1.name + ' ' + item.region.area2.name + ' ' + item.region.area3.name || '';
                             $('.search #address').val(address)
@@ -308,7 +309,14 @@ class Map extends Component {
         
                     });
                 }
-                makemap(this.props.position)
+                
+                navigator.geolocation.getCurrentPosition(function(pos){
+                    makemap(pos);
+                    this.props.getPos(pos);
+                }.bind(this),
+                function(){
+                    makemap(this.props.pos);
+                }.bind(this));
         
             }
             
